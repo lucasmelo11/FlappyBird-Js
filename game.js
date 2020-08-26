@@ -1,12 +1,15 @@
 console.log('[Lucas Dev] Flappy Bird');
 
+const hit_sound = new Audio();
+hit_sound.src = './sounds/hit_ground.wav';
+
 const sprites = new Image();
 sprites.src = './sprites.png';
 
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
 
-const floor = {
+const ground = {
     spriteX: 292,
     spriteY: 0,
     width: 168,
@@ -17,17 +20,17 @@ const floor = {
     draw() {
         context.drawImage(
             sprites,
-            floor.spriteX, floor.spriteY,
-            floor.width, floor.height,
-            floor.canvasX, floor.canvasY,
-            floor.width, floor.height,
+            ground.spriteX, ground.spriteY,
+            ground.width, ground.height,
+            ground.canvasX, ground.canvasY,
+            ground.width, ground.height,
         );
         context.drawImage(
             sprites,
-            floor.spriteX, floor.spriteY,
-            floor.width, floor.height,
-            (floor.canvasX + floor.width), floor.canvasY,
-            floor.width, floor.height,
+            ground.spriteX, ground.spriteY,
+            ground.width, ground.height,
+            (ground.canvasX + ground.width), ground.canvasY,
+            ground.width, ground.height,
         );
     }
 }
@@ -68,32 +71,64 @@ const background = {
     }
 }
 
-const flappy = {
-    spriteX: 113,
-    spriteY: 328,
-    width: 20,
-    height: 14,
-    canvasX: 10,
-    canvasY: 50,
-    
-    gravity: 0.25,
-    speed: 0,
+function collision(flappy, ground) {
+    const flappyBirdY = flappy.canvasY + flappy.height;
+    const groundY = ground.canvasY;
 
-    update(){
+    if(flappyBirdY >= groundY){
+        return true;
+    }
+    return false;
+}
+
+function createFlappy() {
+    const flappy = {
+        spriteX: 113,
+        spriteY: 328,
+        width: 20,
+        height: 14,
+        canvasX: 10,
+        canvasY: 50,
+        
+        jumped: 4.6,
+        
+        jump(){
+            console.log('I have to jump');
+            console.log('[BEFORE]', flappy.speed);
+            flappy.speed = - flappy.jumped;
+            console.log('[AFTER]', flappy.speed);
+        },
+        gravity: 0.25,
+        speed: 0,
+    
+        update(){
+            if(collision(flappy, ground)){
+                console.log('make collision');
+                hit_sound.play();
+
+                setTimeout(() => {
+                    changeScreen(screens.HOME);
+                },250);
+                
+                return;  
+            } 
+        
         flappy.speed = flappy.speed + flappy.gravity;
         flappy.canvasY = flappy.canvasY + flappy.speed;
-    },
-
-    draw() {
-        //ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight); sintaxe para drawr no canvas
-    context.drawImage(
-        sprites,                            //Imagen com vários elementos
-        flappy.spriteX, flappy.spriteY,     //sprite x, sprite y 
-        flappy.width, flappy.height,      // Tamanho do recorte na sprite
-        flappy.canvasX, flappy.canvasY,
-        flappy.width, flappy.height,
-        );
+        },
+    
+        draw() {
+            //ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight); sintaxe para drawr no canvas
+        context.drawImage(
+            sprites,                            //Imagen com vários elementos
+            flappy.spriteX, flappy.spriteY,     //sprite x, sprite y 
+            flappy.width, flappy.height,      // Tamanho do recorte na sprite
+            flappy.canvasX, flappy.canvasY,
+            flappy.width, flappy.height,
+            );
+        }
     }
+    return flappy;
 }
 
 const getready = {
@@ -137,22 +172,30 @@ const tap = {
 }
 
 //TELAS DO GAME
+const global = {};
 let screenActive = {};
 function changeScreen(newScreen){
     screenActive = newScreen;
+
+    if(screenActive.start){
+        screenActive.start();
+    }
 }
 
-const Screens = {
+const screens = {
     HOME: {
+        start(){
+            global.flappy = createFlappy();
+        },
         draw(){
             background.draw();
-            floor.draw();           
+            ground.draw();           
             getready.draw();
             tap.draw();
-            flappy.draw();
+            global.flappy.draw();
         },
         click() {
-            changeScreen(Screens.GAME);
+            changeScreen(screens.GAME);
         },
         update() {
 
@@ -160,14 +203,17 @@ const Screens = {
     }
 }
 
-Screens.GAME = {
+screens.GAME = {
     draw(){
         background.draw();
-        floor.draw();
-        flappy.draw();
+        ground.draw();
+        global.flappy.draw();
+    },
+    click(){
+        global.flappy.jump();
     },
     update(){
-        flappy.update();
+        global.flappy.update();
     }
 }
 
@@ -186,5 +232,5 @@ window.addEventListener('click', function(){
     }
 });
 
-changeScreen(Screens.HOME);
+changeScreen(screens.HOME);
 loop();
