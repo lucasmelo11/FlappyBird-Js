@@ -1,40 +1,19 @@
 console.log('[Lucas Dev] Flappy Bird');
 
+let frames = 0;
+//SONS DO JOGO
 const hit_sound = new Audio();
 hit_sound.src = './sounds/hit_ground.wav';
 
+//IMAGENS DO JOGO
 const sprites = new Image();
 sprites.src = './sprites.png';
 
+//REFERENCIA HTML
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
 
-const ground = {
-    spriteX: 292,
-    spriteY: 0,
-    width: 168,
-    height: 55,
-    canvasX: 0,
-    canvasY: canvas.height - 55,
-    
-    draw() {
-        context.drawImage(
-            sprites,
-            ground.spriteX, ground.spriteY,
-            ground.width, ground.height,
-            ground.canvasX, ground.canvasY,
-            ground.width, ground.height,
-        );
-        context.drawImage(
-            sprites,
-            ground.spriteX, ground.spriteY,
-            ground.width, ground.height,
-            (ground.canvasX + ground.width), ground.canvasY,
-            ground.width, ground.height,
-        );
-    }
-}
-
+//FUNDO DO JOGO
 const background = {
     spriteX:0,
     spriteY:0,
@@ -70,23 +49,62 @@ const background = {
         )     
     }
 }
+//CHÃO DO JOGO
+function createFloor(){
+    const floor = {
+        spriteX: 292,
+        spriteY: 0,
+        width: 167.1,
+        height: 55,
+        canvasX: 0,
+        canvasY: canvas.height - 55,
+        update(){
+            const moveFloor = 1;
+            const repeatFloor = floor.width / 15.2;
+            const moviment = floor.canvasX - moveFloor;
+            
+            //console.log('Floor.canvasX', floor.canvasX);
+            //console.log('repeatFloor', repeatFloor);
+            //console.log('moviment', moviment % repeatFloor);
 
-function collision(flappy, ground) {
+            floor.canvasX = moviment % repeatFloor;
+        },
+        draw() {
+            context.drawImage(
+                sprites,
+                floor.spriteX, floor.spriteY,
+                floor.width, floor.height,
+                floor.canvasX, floor.canvasY,
+                floor.width, floor.height,
+            );
+            context.drawImage(
+                sprites,
+                floor.spriteX, floor.spriteY,
+                floor.width, floor.height,
+                (floor.canvasX + floor.width), floor.canvasY,
+                floor.width, floor.height,
+            );
+        }
+    }
+    return floor;
+}
+//LÓGICA DE COLISÃO COM O CHÃO
+function collision(flappy, floor) {
     const flappyBirdY = flappy.canvasY + flappy.height;
-    const groundY = ground.canvasY;
+    const floorY = floor.canvasY;
 
-    if(flappyBirdY >= groundY){
+    if(flappyBirdY >= floorY){
         return true;
     }
     return false;
 }
-
+//CARACTERISTICAS E DADOS DO PERSONAGEM FLAPPY BIRD
 function createFlappy() {
     const flappy = {
-        spriteX: 113,
-        spriteY: 328,
-        width: 20,
-        height: 14,
+        spriteX: 115,
+        spriteY: 381,
+        width: 18,
+        height: 12,
         canvasX: 10,
         canvasY: 50,
         
@@ -94,20 +112,20 @@ function createFlappy() {
         
         jump(){
             console.log('I have to jump');
-            console.log('[BEFORE]', flappy.speed);
+            //console.log('[BEFORE]', flappy.speed);
             flappy.speed = - flappy.jumped;
-            console.log('[AFTER]', flappy.speed);
+            //console.log('[AFTER]', flappy.speed);
         },
         gravity: 0.25,
         speed: 0,
     
         update(){
-            if(collision(flappy, ground)){
-                console.log('make collision');
+            if(collision(flappy, global.floor)){
+                //console.log('make collision');
                 hit_sound.play();
 
                 setTimeout(() => {
-                    changeScreen(screens.HOME);
+                    changeScreen(Screens.HOME);
                 },250);
                 
                 return;  
@@ -116,12 +134,32 @@ function createFlappy() {
         flappy.speed = flappy.speed + flappy.gravity;
         flappy.canvasY = flappy.canvasY + flappy.speed;
         },
-    
+
+        //MOVIMENTO DE BATER ASAS
+        movimentsFlappy: [
+            {spriteX: 115, spriteY: 381},//ASA PRA CIMA
+            {spriteX: 115, spriteY: 407},//ASA NO MEIO
+            {spriteX: 115, spriteY: 433},//ASA PRA BAIXO
+        ],
+        currentFrame: 0,
+        updateCurrentFrame(){
+            const framesInterval = 14;
+            const passedInterval = frames % framesInterval === 0;
+            //console.log(passedInterval);
+            if(passedInterval){
+                const incrementBase = 1;
+                const increment = incrementBase + flappy.currentFrame;
+                const repeatBase = flappy.movimentsFlappy.length;
+                flappy.currentFrame = increment % repeatBase;
+            }
+        },
         draw() {
+            flappy.updateCurrentFrame();
+            const {spriteX, spriteY} = flappy.movimentsFlappy[flappy.currentFrame];
             //ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight); sintaxe para drawr no canvas
         context.drawImage(
             sprites,                            //Imagen com vários elementos
-            flappy.spriteX, flappy.spriteY,     //sprite x, sprite y 
+            spriteX, spriteY,     //sprite x, sprite y 
             flappy.width, flappy.height,      // Tamanho do recorte na sprite
             flappy.canvasX, flappy.canvasY,
             flappy.width, flappy.height,
@@ -130,14 +168,14 @@ function createFlappy() {
     }
     return flappy;
 }
-
+//MENSAGEM DA TELA INICIAL
 const getready = {
     spriteX: 295,
     spriteY: 59,
     width: 93,
     height: 25,
-    canvasX: 100,
-    canvasY: canvas.height - 290,
+    canvasX: 65,
+    canvasY: canvas.height - 200,
     
     draw() {
         //ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight); sintaxe para drawr no canvas
@@ -150,28 +188,120 @@ const getready = {
         );
     }
 }
-
+//MENSAGEM DA TELA INICIAL
 const tap = {
     spriteX: 292,
     spriteY: 90,
     width: 57,
     height: 50,
-    canvasX: 120,
-    canvasY: canvas.height -250,
+    canvasX: 84,
+    canvasY: canvas.height -150,
     
     draw() {
         //ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight); sintaxe para drawr no canvas
     context.drawImage(
-        sprites,                            //Imagen com vários elementos
+        sprites,                      //Imagen com vários elementos
         tap.spriteX, tap.spriteY,     //sprite x, sprite y 
-        tap.width, tap.height,      // Tamanho do recorte na sprite
+        tap.width, tap.height,        // Tamanho do recorte na sprite
         tap.canvasX, tap.canvasY,
         tap.width, tap.height,
         );
     }
 }
+//CRIA OS CANOS
+function createPipes(){
+    const pipes = {
+            width: 27,
+            height: 166,
+        top:{
+            spriteX: 56,
+            spriteY: 323,     
+        },
+        bottom:{
+            spriteX: 84,
+            spriteY: 323,       
+        },
+        draw(){
+            pipes.pairs.forEach(function(pair){
+            const yRandom =  pair.y;
+            const spaceBetweenPipes = 75;
+        //CANO CÉU
+            const pipeTopX = pair.x;
+            const pipeTopY = yRandom;
 
-//TELAS DO GAME
+        context.drawImage(
+            sprites,
+            pipes.top.spriteX, pipes.top.spriteY,
+            pipes.width, pipes.height,
+            pipeTopX, pipeTopY,
+            pipes.width, pipes.height, 
+        )
+        //CANO CHÃO
+            const pipeBottomX = pair.x;
+            const pipeBottomY = pipes.height + spaceBetweenPipes + yRandom;
+        context.drawImage(
+            sprites,
+            pipes.bottom.spriteX, pipes.bottom.spriteY,
+            pipes.width, pipes.height,
+            pipeBottomX, pipeBottomY,
+            pipes.width, pipes.height, 
+        )
+        pair.pipeTop = {
+            x: pipeTopX,
+            y: pipes.height + pipeTopY
+        }
+        pair.pipeBottom = {
+            x: pipeBottomX,
+            y: pipeBottomY
+        }   
+        })
+    },
+    //COLISÃO COM OS CANOS
+    CollisionWithFlappy(pair){
+        const flappyHead = global.flappy.canvasY; 
+        const flappyFoot = global.flappy.canvasY + global.flappy.height;
+        if(global.flappy.canvasX >= pair.x){
+            console.log('VOCÊ INVAIDIU A AREA DOS CANOS');
+            if(flappyHead <= pair.pipeTop.y){
+                return true;
+            }
+
+            if(flappyFoot >= pair.pipeBottom.y){
+                return true;
+            }
+        }
+        return false;            
+    },
+    pairs: [],
+    //A CADA 100 FRAMES A ALTURA DOS CANOS É ALTERADA
+    update(){
+        const passed100Frames = frames % 100 === 0;
+        if(passed100Frames){
+            console.log('Passou 100 frames');
+            pipes.pairs.push({
+                x: canvas.width,
+                y: -40 * (Math.random()+ 1.7),
+            });
+        }
+
+        pipes.pairs.forEach(function(pair){
+            pair.x = pair.x - 1;
+            
+            if(pipes.CollisionWithFlappy(pair)){
+                //console.log('ACERTOU O CANO');
+                changeScreen(Screens.HOME);
+            }
+            
+            if(pair.x + pipes.width <= 0){
+                pipes.pairs.shift();
+            }
+        });
+    }
+}
+    return pipes;
+}
+//--//--//--//--//--//--//--//--//--//--//--//--//--//--//--//--//
+//TELAS DO GAME 
 const global = {};
 let screenActive = {};
 function changeScreen(newScreen){
@@ -181,38 +311,44 @@ function changeScreen(newScreen){
         screenActive.start();
     }
 }
-
-const screens = {
+//TELA INICILA DO JOGO
+const Screens = {
     HOME: {
         start(){
             global.flappy = createFlappy();
+            global.floor = createFloor();
+            global.pipes = createPipes();
         },
         draw(){
-            background.draw();
-            ground.draw();           
+            background.draw();                     
             getready.draw();
             tap.draw();
+            global.pipes.draw();
+            global.floor.draw();
             global.flappy.draw();
         },
         click() {
-            changeScreen(screens.GAME);
+            changeScreen(Screens.GAME);
         },
         update() {
-
+            global.floor.update();
         }
     }
 }
-
-screens.GAME = {
+//TELA DURANTE O JOGO
+Screens.GAME = {
     draw(){
         background.draw();
-        ground.draw();
+        global.pipes.draw();
+        global.floor.draw();
         global.flappy.draw();
     },
     click(){
         global.flappy.jump();
     },
     update(){
+        global.pipes.update();
+        global.floor.update();
         global.flappy.update();
     }
 }
@@ -222,15 +358,15 @@ function loop() {
     screenActive.draw();
     screenActive.update();
    
-    
+    frames = frames + 1;
     requestAnimationFrame(loop);
 }
-
+//RECONHECE CLICKS NA TELA
 window.addEventListener('click', function(){
     if(screenActive.click){
         screenActive.click();
     }
 });
 
-changeScreen(screens.HOME);
+changeScreen(Screens.HOME);
 loop();
