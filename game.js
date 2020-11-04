@@ -4,6 +4,10 @@ let frames = 0;
 //SONS DO JOGO
 const hit_sound = new Audio();
 hit_sound.src = './sounds/hit_ground.wav';
+const hit_sound_pipe = new Audio();
+hit_sound_pipe.src = './sounds/hit_pipe.mp3';
+const jump_sound = new Audio();
+jump_sound.src = './sounds/jump.mp3';
 
 //IMAGENS DO JOGO
 const sprites = new Image();
@@ -261,7 +265,7 @@ function createPipes(){
         const flappyHead = global.flappy.canvasY; 
         const flappyFoot = global.flappy.canvasY + global.flappy.height;
         if(global.flappy.canvasX >= pair.x){
-            console.log('VOCÊ INVAIDIU A AREA DOS CANOS');
+            //console.log('VOCÊ INVAIDIU A AREA DOS CANOS');
             if(flappyHead <= pair.pipeTop.y){
                 return true;
             }
@@ -289,6 +293,7 @@ function createPipes(){
             
             if(pipes.CollisionWithFlappy(pair)){
                 //console.log('ACERTOU O CANO');
+                hit_sound_pipe.play();
                 changeScreen(Screens.HOME);
             }
             
@@ -344,6 +349,8 @@ Screens.GAME = {
         global.flappy.draw();
     },
     click(){
+        jump_sound.play();
+        jump_sound.currentTime = 0.2;
         global.flappy.jump();
     },
     update(){
